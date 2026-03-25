@@ -683,22 +683,32 @@ function renderMedia(){
 
 // NOVA: tabela de todas as voltas
 function renderLaps(){
-  const tbody=document.querySelector("#tbl-laps tbody");
-  const km=globalKeyMap;
+  const tbody = document.querySelector("#tbl-laps tbody");
+  const km    = globalKeyMap;
 
   // aplica os mesmos filtros sobre completeRows
-  const laps = completeRows.filter(row=>{
+  let laps = completeRows.filter(row=>{
     const team     = String(getF(row,"Team",km)||"").trim();
     const compound = String(getF(row,"Compound",km)||"").trim();
-    if(activeTeams.size>0     && !activeTeams.has(team))         return false;
-    if(activeCompounds.size>0 && !activeCompounds.has(compound)) return false;
+    if (activeTeams.size     > 0 && !activeTeams.has(team))         return false;
+    if (activeCompounds.size > 0 && !activeCompounds.has(compound)) return false;
     return true;
   });
 
-  if(!laps.length){
-    tbody.innerHTML=`<tr><td colspan="17" class="empty-state">Nenhuma volta para os filtros selecionados.</td></tr>`;
+  if (!laps.length){
+    tbody.innerHTML = `<tr><td colspan="17" class="empty-state">Nenhuma volta para os filtros selecionados.</td></tr>`;
     return;
   }
+
+  // ORDEM: do mais rápido para o mais lento (menor LapTime primeiro)
+  laps = laps.slice().sort((a,b)=>{
+    const ta = parseTimeToMs(getF(a,"LapTime",km));
+    const tb = parseTimeToMs(getF(b,"LapTime",km));
+    if (ta === null && tb === null) return 0;
+    if (ta === null) return 1;   // nulos vão para o final
+    if (tb === null) return -1;
+    return ta - tb;              // crescente: mais rápido antes
+  });
 
   tbody.innerHTML = laps.map(row=>{
     const drv  = getF(row,"Driver",km);
@@ -740,13 +750,13 @@ function renderLaps(){
         <td>${fmtMs(s1Ms)}</td>
         <td>${fmtMs(s2Ms)}</td>
         <td>${fmtMs(s3Ms)}</td>
-        <td>${sp1??"–"}</td>
-        <td>${sp2??"–"}</td>
-        <td>${spFL??"–"}</td>
-        <td>${spST??"–"}</td>
-        <td>${tl??"–"}</td>
-        <td>${fresh??"–"}</td>
-        <td>${pb??"–"}</td>
+        <td>${sp1 ?? "–"}</td>
+        <td>${sp2 ?? "–"}</td>
+        <td>${spFL ?? "–"}</td>
+        <td>${spST ?? "–"}</td>
+        <td>${tl ?? "–"}</td>
+        <td>${fresh ?? "–"}</td>
+        <td>${pb ?? "–"}</td>
       </tr>`;
   }).join("");
 }
